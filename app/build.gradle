@@ -1,0 +1,47 @@
+
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "otang.lib.pulse.example"
+    compileSdk 33
+    buildToolsVersion "33.0.3"
+
+    defaultConfig {
+        applicationId "otang.lib.pulse.example"
+        minSdk 26
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+        
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+    
+}
+
+dependencies {
+    implementation project(':lib')
+	implementation 'androidx.appcompat:appcompat:1.6.1'
+	implementation 'com.google.android.exoplayer:exoplayer-core:2.19.0'
+	implementation 'com.google.android.material:material:1.9.0'
+	implementation 'com.github.Otang45:crashreport:2.0-fix'
+}
