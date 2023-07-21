@@ -5,18 +5,17 @@ plugins {
 
 android {
 	namespace "otang.pulse.lib"
-    compileSdk 33
-    buildToolsVersion "33.0.3"
+    compileSdk 34
+    buildToolsVersion '33.0.2'
 
     defaultConfig {
         minSdk 26
-        targetSdk 33
-        versionCode 1
-        versionName "1.0"
-        
+        targetSdk 34
+
         vectorDrawables {
             useSupportLibrary true
         }
+        multiDexEnabled true
     }
     
     compileOptions {

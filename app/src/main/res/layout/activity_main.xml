@@ -1,34 +1,284 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appbar"
+    <otang.pulse.lib.VisualizerView
+        android:id="@+id/vv"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/b_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Play"
+            tools:ignore="HardcodedText" />
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize" />
-    </com.google.android.material.appbar.AppBarLayout>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            tools:ignore="DisableBaselineAlignment">
 
-    <include
-        android:id="@+id/content"
-        layout="@layout/content_main" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        app:srcCompat="@android:drawable/ic_media_play" />
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/ms_enabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pulse Enabled"
+                    tools:ignore="HardcodedText" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/ms_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Left Landscape"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/ms_center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Center Mirror"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/ms_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vertical Mirror"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/ms_rounded"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rounded Enabled"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/ms_smooth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Smooth Enabled"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            tools:ignore="DisableBaselineAlignment">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Render Mode"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_render"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="1"
+                    android:valueFrom="0"
+                    android:valueTo="1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Gravity"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_gravity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:valueFrom="0"
+                    android:valueTo="2" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Color"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:valueFrom="0"
+                    android:valueTo="2" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Lava Speed"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_lava"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1000"
+                    android:value="10000"
+                    android:valueFrom="5000"
+                    android:valueTo="15000" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dimen"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_dim"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="14"
+                    android:valueFrom="1"
+                    android:valueTo="30" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Div"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_div"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="2"
+                    android:value="14"
+                    android:valueFrom="2"
+                    android:valueTo="44" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fill"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_fill"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="4"
+                    android:valueFrom="4"
+                    android:valueTo="8" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Empty"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="1"
+                    android:valueFrom="0"
+                    android:valueTo="4" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fudge"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_fudge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="5"
+                    android:valueFrom="0"
+                    android:valueTo="10" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ovacity"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_ovacity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:value="200"
+                    android:valueFrom="0"
+                    android:valueTo="255" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Count"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/s_count"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="16"
+                    android:value="32"
+                    android:valueFrom="16"
+                    android:valueTo="128" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

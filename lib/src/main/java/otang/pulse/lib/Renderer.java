@@ -3,65 +3,66 @@ package otang.pulse.lib;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.os.Build;
-import android.os.Handler;
 import android.view.WindowManager;
-import otang.pulse.lib.util.PrefUtils;
+
+import otang.pulse.lib.util.PulseConfig;
 
 public abstract class Renderer implements VisualizerStreamHandler.Listener {
 
-  protected Context mContext;
-  protected PulseView mView;
-  protected ColorController mColorController;
-  protected boolean mIsValidStream;
-  private long mPulseFPS;
-  private long mPulseFPSToMs;
-  private long mCurrentTime;
-  private long mRenderCounter;
-  private long mCurrentCounter;
-  protected PrefUtils mPref;
+    protected Context mContext;
+    protected VisualizerView mView;
+    protected ColorController mColorController;
+    protected boolean mIsValidStream;
+    private final long mPulseFPSToMs;
+    private long mRenderCounter;
+    protected PulseConfig mPref;
 
-  public Renderer(Context context, PulseView view, ColorController colorController) {
-    mContext = context;
-    mPref = new PrefUtils(context);
-    mView = view;
-    mColorController = colorController;
-    WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-    mRenderCounter = System.currentTimeMillis();
-    mPulseFPS =
-        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-            ? (int) wm.getDefaultDisplay().getRefreshRate()
-            : (int) context.getDisplay().getRefreshRate());
-    mPulseFPSToMs = 1000 / mPulseFPS;
-  }
-
-  protected final void postInvalidate() {
-    mCurrentTime = System.currentTimeMillis();
-    mCurrentCounter = mCurrentTime - mRenderCounter;
-    if (mCurrentCounter >= mPulseFPSToMs) {
-      mRenderCounter = mCurrentTime;
-      mView.postInvalidate();
+    public Renderer(Context context, VisualizerView view, ColorController colorController) {
+        mContext = context;
+        mPref = new PulseConfig(context);
+        mView = view;
+        mColorController = colorController;
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        mRenderCounter = System.currentTimeMillis();
+        long mPulseFPS = Build.VERSION.SDK_INT < Build.VERSION_CODES.R ? (int) wm.getDefaultDisplay().getRefreshRate() : (int) context.getDisplay().getRefreshRate();
+        mPulseFPSToMs = 1000 / mPulseFPS;
     }
-  }
 
-  public abstract void draw(Canvas canvas);
+    protected final void postInvalidate() {
+        long mCurrentTime = System.currentTimeMillis();
+        long mCurrentCounter = mCurrentTime - mRenderCounter;
+        if (mCurrentCounter >= mPulseFPSToMs) {
+            mRenderCounter = mCurrentTime;
+        }
+        mView.invalidate();
+    }
 
-  @Override
-  public void onWaveFormUpdate(byte[] bytes) {}
+    public abstract void draw(Canvas canvas);
 
-  @Override
-  public void onFFTUpdate(byte[] fft) {}
+    @Override
+    public void onWaveFormUpdate(byte[] bytes) {
+    }
 
-  public void onVisualizerLinkChanged(boolean linked) {}
+    @Override
+    public void onFFTUpdate(byte[] fft) {
+    }
 
-  public void destroy() {}
+    public void onVisualizerLinkChanged(boolean linked) {
+    }
 
-  public void setLeftInLandscape(boolean leftInLandscape) {}
+    public void destroy() {
+    }
 
-  public void onSizeChanged(int w, int h, int oldw, int oldh) {}
+    public void setLeftInLandscape(boolean leftInLandscape) {
+    }
 
-  public void onUpdateColor(int color) {}
+    public void onSizeChanged(int w, int h, int oldw, int oldh) {
+    }
 
-  public boolean isValidStream() {
-    return mIsValidStream;
-  }
+    public void onUpdateColor(int color) {
+    }
+
+    public boolean isValidStream() {
+        return mIsValidStream;
+    }
 }
