@@ -1,139 +1,142 @@
-package otang.lib.pulse.example;
+@file:Suppress("DEPRECATION")
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.os.Bundle;
-import android.widget.CompoundButton;
+package otang.lib.pulse.example
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import android.Manifest
+import android.annotation.SuppressLint
+import android.os.Bundle
+import android.view.View
+import android.widget.CompoundButton
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.exoplayer2.Player
+import com.google.android.material.color.DynamicColors
+import com.google.android.material.internal.EdgeToEdgeUtils
+import com.google.android.material.slider.Slider
+import otang.lib.pulse.example.databinding.ActivityMainBinding
+import otang.pulse.lib.util.PulseConfig
+import pub.devrel.easypermissions.EasyPermissions
 
-import com.google.android.exoplayer2.Player;
-import com.google.android.material.color.DynamicColors;
-import com.google.android.material.internal.EdgeToEdgeUtils;
-
-import otang.lib.pulse.example.databinding.ActivityMainBinding;
-import otang.pulse.lib.util.PulseConfig;
-import pub.devrel.easypermissions.EasyPermissions;
-
-public class MainActivity extends AppCompatActivity implements Player.Listener {
-
-    private ActivityMainBinding binding;
-    private AudioPlayer player;
-    private PulseConfig config;
-
+class MainActivity : AppCompatActivity(), Player.Listener {
+    private var binding: ActivityMainBinding? = null
+    private var player: AudioPlayer? = null
+    private var config: PulseConfig? = null
     @SuppressLint("RestrictedApi")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        EdgeToEdgeUtils.applyEdgeToEdge(getWindow(), true);
-        DynamicColors.applyToActivityIfAvailable(this);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        config = binding.vv.getPulsePref();
-        setContentView(binding.getRoot());
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        EdgeToEdgeUtils.applyEdgeToEdge(window, true)
+        DynamicColors.applyToActivityIfAvailable(this)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        config = binding!!.vv.pulsePref
+        setContentView(binding!!.root)
         if (!EasyPermissions.hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
-            EasyPermissions.requestPermissions(this, "Rationale", 10, Manifest.permission.RECORD_AUDIO);
+            EasyPermissions.requestPermissions(
+                this,
+                "Rationale",
+                10,
+                Manifest.permission.RECORD_AUDIO
+            )
         }
         // Player
-        player = new AudioPlayer(this);
-        player.setSource("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
-        player.setListener(this);
-        setupPreference();
-        binding.bPlay.setOnClickListener(v -> {
-            if (player.isPlaying()) {
-                player.pause();
+        player = AudioPlayer(this)
+        player!!.setSource("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3")
+        player!!.setListener(this)
+        setupPreference()
+        binding!!.bPlay.setOnClickListener { _: View? ->
+            if (player!!.isPlaying) {
+                player!!.pause()
             } else {
-                player.play();
+                player!!.play()
             }
-        });
+        }
     }
 
-    private void setupPreference() {
-        binding.msCenter.setChecked(config.isCenterMirror());
-        binding.msCenter.setOnCheckedChangeListener((c, b) -> {
-            config.setCenterMirror(b);
-        });
-        binding.msEnabled.setChecked(config.isPulseEnabled());
-        binding.msEnabled.setOnCheckedChangeListener((c, b) -> {
-            config.setPulseEnabled(b);
-        });
-        binding.msLeft.setChecked(config.isLeftInLandscape());
-        binding.msLeft.setOnCheckedChangeListener((c, b) -> {
-            config.setLeftInLandscape(b);
-        });
-        binding.msRounded.setChecked(config.isSolidRounded());
-        binding.msRounded.setOnCheckedChangeListener((c, b) -> {
-            config.setSolidRounded(b);
-        });
-        binding.msSmooth.setChecked(config.isSmoothEnabled());
-        binding.msSmooth.setOnCheckedChangeListener((c, b) -> {
-            config.setSmoothEnabled(b);
-        });
-        binding.msVertical.setChecked(config.isVerticalMirror());
-        binding.msVertical.setOnCheckedChangeListener((c, b) -> {
-            config.setVerticalMirror(b);
-        });
-        binding.sColor.setValue(config.getPulseColor());
-        binding.sColor.addOnChangeListener((s, i, u) -> {
-            config.setPulseColor((int) i);
-        });
-        binding.sCount.setValue(config.getSolidLineCount());
-        binding.sCount.addOnChangeListener((s, i, u) -> {
-            config.setSolidLineCount((int) i);
-        });
-        binding.sDim.setValue(config.getFadingDim());
-        binding.sDim.addOnChangeListener((s, i, u) -> {
-            config.setFadingDim((int) i);
-        });
-        binding.sDiv.setValue(config.getFadingDiv());
-        binding.sDiv.addOnChangeListener((s, i, u) -> {
-            config.setFadingDiv((int) i);
-        });
-        binding.sEmpty.setValue(config.getEmptySize());
-        binding.sEmpty.addOnChangeListener((s, i, u) -> {
-            config.setEmptySize((int) i);
-        });
-        binding.sFudge.setValue(config.getSolidFudge());
-        binding.sFudge.addOnChangeListener((s, i, u) -> {
-            config.setFadingFudge((int) i);
-            config.setSolidFudge((int) i);
-        });
-        binding.sGravity.setValue(config.getGravity());
-        binding.sGravity.addOnChangeListener((s, i, u) -> {
-            config.setGravity((int) i);
-        });
-        binding.sLava.setValue(config.getLavaSpeed());
-        binding.sLava.addOnChangeListener((s, i, u) -> {
-            config.setLavaSpeed((int) i);
-        });
-        binding.sOvacity.setValue(config.getSolidOvacity());
-        binding.sOvacity.addOnChangeListener((s, i, u) -> {
-            config.setSolidOvacity((int) i);
-        });
-        binding.sRender.setValue(config.getRenderStyle());
-        binding.sRender.addOnChangeListener((s, i, u) -> {
-            config.setRenderStyle((int) i);
-        });
-        binding.sFill.setValue(config.getFillSize());
-        binding.sFill.addOnChangeListener((s, i, u) -> {
-            config.setFillSize((int) i);
-        });
+    private fun setupPreference() {
+        binding!!.msCenter.isChecked = config!!.isCenterMirror
+        binding!!.msCenter.setOnCheckedChangeListener { _: CompoundButton?, b: Boolean ->
+            config!!.isCenterMirror = b
+        }
+        binding!!.msEnabled.isChecked = config!!.isPulseEnabled
+        binding!!.msEnabled.setOnCheckedChangeListener { _: CompoundButton?, b: Boolean ->
+            config!!.isPulseEnabled = b
+        }
+        binding!!.msLeft.isChecked = config!!.isLeftInLandscape
+        binding!!.msLeft.setOnCheckedChangeListener { _: CompoundButton?, b: Boolean ->
+            config!!.isLeftInLandscape = b
+        }
+        binding!!.msRounded.isChecked = config!!.isSolidRounded
+        binding!!.msRounded.setOnCheckedChangeListener { _: CompoundButton?, b: Boolean ->
+            config!!.isSolidRounded = b
+        }
+        binding!!.msSmooth.isChecked = config!!.isSmoothEnabled
+        binding!!.msSmooth.setOnCheckedChangeListener { _: CompoundButton?, b: Boolean ->
+            config!!.isSmoothEnabled = b
+        }
+        binding!!.msVertical.isChecked = config!!.isVerticalMirror
+        binding!!.msVertical.setOnCheckedChangeListener { _: CompoundButton?, b: Boolean ->
+            config!!.isVerticalMirror = b
+        }
+        binding!!.sColor.value = config!!.pulseColor.toFloat()
+        binding!!.sColor.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.pulseColor = i.toInt()
+        })
+        binding!!.sCount.value = config!!.solidLineCount.toFloat()
+        binding!!.sCount.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.solidLineCount = i.toInt()
+        })
+        binding!!.sDim.value = config!!.fadingDim.toFloat()
+        binding!!.sDim.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.fadingDim = i.toInt()
+        })
+        binding!!.sDiv.value = config!!.fadingDiv.toFloat()
+        binding!!.sDiv.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.fadingDiv = i.toInt()
+        })
+        binding!!.sEmpty.value = config!!.emptySize.toFloat()
+        binding!!.sEmpty.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.emptySize = i.toInt()
+        })
+        binding!!.sFudge.value = config!!.solidFudge.toFloat()
+        binding!!.sFudge.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.fadingFudge = i.toInt()
+            config!!.solidFudge = i.toInt()
+        })
+        binding!!.sGravity.value = config!!.gravity.toFloat()
+        binding!!.sGravity.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.gravity = i.toInt()
+        })
+        binding!!.sLava.value = config!!.lavaSpeed.toFloat()
+        binding!!.sLava.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.lavaSpeed = i.toInt()
+        })
+        binding!!.sOvacity.value = config!!.solidOvacity.toFloat()
+        binding!!.sOvacity.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.solidOvacity = i.toInt()
+        })
+        binding!!.sRender.value = config!!.renderStyle.toFloat()
+        binding!!.sRender.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.renderStyle = i.toInt()
+        })
+        binding!!.sFill.value = config!!.fillSize.toFloat()
+        binding!!.sFill.addOnChangeListener(Slider.OnChangeListener { _: Slider?, i: Float, _: Boolean ->
+            config!!.fillSize = i.toInt()
+        })
     }
 
-    @Override
-    public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
-        binding.vv.setAudioSessionId(player.getAudioSessionId());
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        player?.let { binding!!.vv.setAudioSessionId(it.audioSessionId) }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        this.binding = null;
+    override fun onDestroy() {
+        super.onDestroy()
+        binding = null
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 }

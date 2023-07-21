@@ -1,10 +1,11 @@
 
 plugins {
-    id "com.android.library"
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
-	namespace "otang.pulse.lib"
+	namespace 'otang.pulse.lib'
     compileSdk 34
     buildToolsVersion '33.0.2'
 
@@ -19,14 +20,18 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
     }
 
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -37,7 +42,8 @@ android {
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:1.6.1"
-	implementation "androidx.preference:preference:1.2.0"
-    implementation "com.google.android.material:material:1.9.0"
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.10.1'
+	implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation 'com.google.android.material:material:1.9.0'
 }

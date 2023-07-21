@@ -1,304 +1,348 @@
-package otang.pulse.lib;
+package otang.pulse.lib
 
-import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
+import android.animation.ValueAnimator
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import androidx.core.graphics.ColorUtils
+import kotlin.math.log10
 
-import androidx.core.graphics.ColorUtils;
+class SolidLineRenderer(context: Context, view: VisualizerView, colorController: ColorController) :
+    Renderer(context, view, colorController), OnSharedPreferenceChangeListener {
+    private val mPaint: Paint
+    private var mUnitsOpacity = 200
+    private var mColor = Color.WHITE
+    private var mValueAnimators: Array<ValueAnimator?>? = null
+    private var mFFTAverage: Array<FFTAverage?>? = null
+    private lateinit var mFFTPoints: FloatArray
+    private var mDbFuzzFactor = 0
+    private var mVertical = false
+    private var mLeftInLandscape = false
+    private var mWidth = 0
+    private var mHeight = 0
+    private var mUnits = 0
+    private var mGravity = 0
+    private var mSmoothingEnabled = false
+    private var mCenterMirrored = false
+    private var mVerticalMirror = false
+    private var mRounded = false
 
-import otang.pulse.lib.util.PulseConfig;
-
-public class SolidLineRenderer extends Renderer implements SharedPreferences.OnSharedPreferenceChangeListener {
-
-    private static final int GRAVITY_BOTTOM = 0;
-    private static final int GRAVITY_TOP = 1;
-    private static final int GRAVITY_CENTER = 2;
-    private final Paint mPaint;
-    private int mUnitsOpacity = 200;
-    private int mColor = Color.WHITE;
-    private ValueAnimator[] mValueAnimators;
-    private FFTAverage[] mFFTAverage;
-    private float[] mFFTPoints;
-    private int mDbFuzzFactor;
-    private boolean mVertical;
-    private boolean mLeftInLandscape;
-    private int mWidth, mHeight, mUnits, mGravity;
-    private boolean mSmoothingEnabled;
-    private boolean mCenterMirrored;
-    private boolean mVerticalMirror;
-    private boolean mRounded;
-
-    public SolidLineRenderer(Context context, VisualizerView view, ColorController colorController) {
-        super(context, view, colorController);
-        mPref.registerListener(this);
-        mPaint = new Paint();
-        mPaint.setAntiAlias(true);
-        updateSettings();
-        loadValueAnimators();
-        onSizeChanged(0, 0, 0, 0);
+    init {
+        mPref.registerListener(this)
+        mPaint = Paint()
+        mPaint.isAntiAlias = true
+        updateSettings()
+        loadValueAnimators()
+        onSizeChanged(0, 0, 0, 0)
     }
 
-    @Override
-    public void setLeftInLandscape(boolean leftInLandscape) {
+    override fun setLeftInLandscape(leftInLandscape: Boolean) {
         if (mLeftInLandscape != leftInLandscape) {
-            mLeftInLandscape = leftInLandscape;
-            onSizeChanged(0, 0, 0, 0);
+            mLeftInLandscape = leftInLandscape
+            onSizeChanged(0, 0, 0, 0)
         }
     }
 
     @SuppressLint("Recycle")
-    private void loadValueAnimators() {
+    private fun loadValueAnimators() {
         if (mValueAnimators != null) {
-            stopAnimation(mValueAnimators.length);
+            stopAnimation(mValueAnimators!!.size)
         }
-        mValueAnimators = new ValueAnimator[mUnits];
-        final boolean isVertical = mVertical;
-        for (int i = 0; i < mUnits; i++) {
-            final int j;
-            if (isVertical) {
-                j = i * 4;
+        mValueAnimators = arrayOfNulls(mUnits)
+        val isVertical = mVertical
+        for (i in 0 until mUnits) {
+            val j: Int = if (isVertical) {
+                i * 4
             } else {
-                j = i * 4 + 1;
+                i * 4 + 1
             }
-            mValueAnimators[i] = new ValueAnimator();
-            mValueAnimators[i].setDuration(128);
-            mValueAnimators[i].addUpdateListener(animation -> {
-                mFFTPoints[j] = (float) animation.getAnimatedValue();
-                postInvalidate();
-            });
+            mValueAnimators!![i] = ValueAnimator()
+            mValueAnimators!![i]!!.duration = 128
+            mValueAnimators!![i]!!.addUpdateListener { animation: ValueAnimator ->
+                mFFTPoints[j] = animation.animatedValue as Float
+                postInvalidate()
+            }
         }
     }
 
-    private void stopAnimation(int index) {
-        if (mValueAnimators == null) return;
-        for (int i = 0; i < index; i++) {
+    private fun stopAnimation(index: Int) {
+        if (mValueAnimators == null) return
+        for (i in 0 until index) {
             // prevent onAnimationUpdate existing listeners (by stopping them) to call
             // a wrong mFFTPoints index after mUnits gets updated by the user
-            mValueAnimators[i].removeAllUpdateListeners();
-            mValueAnimators[i].cancel();
+            mValueAnimators!![i]!!.removeAllUpdateListeners()
+            mValueAnimators!![i]!!.cancel()
         }
     }
 
-    private void setPortraitPoints() {
-        float units = (float) mUnits;
-        float barUnit = mWidth / units;
-        float barWidth = barUnit * 8f / 9f;
-        float startPoint = mHeight;
-        if (mGravity == GRAVITY_BOTTOM) {
-            startPoint = (float) mHeight;
-        } else if (mGravity == GRAVITY_TOP) {
-            startPoint = 0f;
-        } else if (mGravity == GRAVITY_CENTER) {
-            startPoint = (float) mHeight / 2f;
+    private fun setPortraitPoints() {
+        val units = mUnits.toFloat()
+        var barUnit = mWidth / units
+        val barWidth = barUnit * 8f / 9f
+        var startPoint = mHeight.toFloat()
+        when (mGravity) {
+            GRAVITY_BOTTOM -> {
+                startPoint = mHeight.toFloat()
+            }
+
+            GRAVITY_TOP -> {
+                startPoint = 0f
+            }
+
+            GRAVITY_CENTER -> {
+                startPoint = mHeight.toFloat() / 2f
+            }
         }
-        barUnit = barWidth + (barUnit - barWidth) * units / (units - 1);
-        mPaint.setStrokeWidth(barWidth);
-        mPaint.setStrokeCap(mRounded ? Paint.Cap.ROUND : Paint.Cap.BUTT);
-        for (int i = 0; i < mUnits; i++) {
-            mFFTPoints[i * 4] = mFFTPoints[i * 4 + 2] = i * barUnit + (barWidth / 2);
-            mFFTPoints[i * 4 + 1] = startPoint;
-            mFFTPoints[i * 4 + 3] = startPoint;
+        barUnit = barWidth + (barUnit - barWidth) * units / (units - 1)
+        mPaint.strokeWidth = barWidth
+        mPaint.strokeCap =
+            if (mRounded) Paint.Cap.ROUND else Paint.Cap.BUTT
+        for (i in 0 until mUnits) {
+            mFFTPoints[i * 4 + 2] = i * barUnit + barWidth / 2
+            mFFTPoints[i * 4] = mFFTPoints[i * 4 + 2]
+            mFFTPoints[i * 4 + 1] = startPoint
+            mFFTPoints[i * 4 + 3] = startPoint
         }
     }
 
-    private void setVerticalPoints() {
-        float units = (float) mUnits;
-        float barUnit = mHeight / units;
-        float barHeight = barUnit * 8f / 9f;
-        float startPoint = mWidth;
-        if (mGravity == GRAVITY_BOTTOM) {
-            startPoint = (float) mWidth;
-        } else if (mGravity == GRAVITY_TOP) {
-            startPoint = 0f;
-        } else if (mGravity == GRAVITY_CENTER) {
-            startPoint = (float) mWidth / 2f;
+    private fun setVerticalPoints() {
+        val units = mUnits.toFloat()
+        var barUnit = mHeight / units
+        val barHeight = barUnit * 8f / 9f
+        var startPoint = mWidth.toFloat()
+        when (mGravity) {
+            GRAVITY_BOTTOM -> {
+                startPoint = mWidth.toFloat()
+            }
+
+            GRAVITY_TOP -> {
+                startPoint = 0f
+            }
+
+            GRAVITY_CENTER -> {
+                startPoint = mWidth.toFloat() / 2f
+            }
         }
-        barUnit = barHeight + (barUnit - barHeight) * units / (units - 1);
-        mPaint.setStrokeWidth(barHeight);
-        mPaint.setStrokeCap(mRounded ? Paint.Cap.ROUND : Paint.Cap.BUTT);
-        for (int i = 0; i < mUnits; i++) {
-            mFFTPoints[i * 4 + 1] = mFFTPoints[i * 4 + 3] = i * barUnit + (barHeight / 2);
-            mFFTPoints[i * 4] = mLeftInLandscape ? 0 : startPoint;
-            mFFTPoints[i * 4 + 2] = mLeftInLandscape ? 0 : startPoint;
+        barUnit = barHeight + (barUnit - barHeight) * units / (units - 1)
+        mPaint.strokeWidth = barHeight
+        mPaint.strokeCap =
+            if (mRounded) Paint.Cap.ROUND else Paint.Cap.BUTT
+        for (i in 0 until mUnits) {
+            mFFTPoints[i * 4 + 3] = i * barUnit + barHeight / 2
+            mFFTPoints[i * 4 + 1] = mFFTPoints[i * 4 + 3]
+            mFFTPoints[i * 4] = (if (mLeftInLandscape) 0 else startPoint) as Float
+            mFFTPoints[i * 4 + 2] = (if (mLeftInLandscape) 0 else startPoint) as Float
         }
     }
 
-    @Override
-    public void onSizeChanged(int w, int h, int oldw, int oldh) {
-        if (mView.getWidth() > 0 && mView.getHeight() > 0) {
-            mWidth = mView.getWidth();
-            mHeight = mView.getHeight();
-            mVertical = mHeight < mWidth;
-            loadValueAnimators();
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        if (mView.width > 0 && mView.height > 0) {
+            mWidth = mView.width
+            mHeight = mView.height
+            mVertical = mHeight < mWidth
+            loadValueAnimators()
             if (mVertical) {
-                setVerticalPoints();
+                setVerticalPoints()
             } else {
-                setPortraitPoints();
+                setPortraitPoints()
             }
         }
     }
 
-    @Override
-    public void onStreamAnalyzed(boolean isValid) {
-        mIsValidStream = isValid;
+    override fun onStreamAnalyzed(isValid: Boolean) {
+        mIsValidStream = isValid
         if (isValid) {
-            onSizeChanged(0, 0, 0, 0);
-            mColorController.startLavaLamp();
+            onSizeChanged(0, 0, 0, 0)
+            mColorController.startLavaLamp()
         }
     }
 
-    @Override
-    public void onWaveFormUpdate(byte[] fft) {
-        onDataCapture(fft);
+    override fun onWaveFormUpdate(bytes: ByteArray?) {
+        onDataCapture(bytes)
     }
 
-    private void onDataCapture(byte[] fft) {
-        int fudgeFactor = mDbFuzzFactor * 5;
-        int i = 0;
-        byte rfk;
-        byte ifk;
-        int dbValue;
-        float magnitude;
-        for (; i < (mCenterMirrored ? (mUnits / 2) : mUnits); i++) {
-            if (mValueAnimators[i] == null) continue;
-            mValueAnimators[i].cancel();
-            rfk = fft[i * 2 + 2];
-            ifk = fft[i * 2 + 3];
-            magnitude = rfk * rfk + ifk * ifk;
-            dbValue = magnitude > 0 ? (int) (10 * Math.log10(magnitude)) : 0;
+    private fun onDataCapture(fft: ByteArray?) {
+        val fudgeFactor = mDbFuzzFactor * 5
+        var i = 0
+        var rfk: Byte
+        var ifk: Byte
+        var dbValue: Int
+        var magnitude: Float
+        while (i < if (mCenterMirrored) mUnits / 2 else mUnits) {
+            if (mValueAnimators!![i] == null) {
+                i++
+                continue
+            }
+            mValueAnimators!![i]!!.cancel()
+            rfk = fft!![i * 2 + 2]
+            ifk = fft[i * 2 + 3]
+            magnitude = (rfk * rfk + ifk * ifk).toFloat()
+            dbValue = if (magnitude > 0) (10 * log10(magnitude.toDouble())).toInt() else 0
             if (mSmoothingEnabled) {
                 if (mFFTAverage == null) {
-                    setupFFTAverage();
+                    setupFFTAverage()
                 }
-                dbValue = mFFTAverage[i].average(dbValue);
+                dbValue = mFFTAverage!![i]!!.average(dbValue)
             }
             if (mVertical) {
                 if (mLeftInLandscape || mGravity == GRAVITY_TOP) {
-                    mValueAnimators[i].setFloatValues(mFFTPoints[i * 4], dbValue * fudgeFactor);
+                    mValueAnimators!![i]!!.setFloatValues(
+                        mFFTPoints[i * 4],
+                        (dbValue * fudgeFactor).toFloat()
+                    )
                 } else if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
-                    mValueAnimators[i].setFloatValues(mFFTPoints[i * 4], mFFTPoints[2] - (dbValue * fudgeFactor));
+                    mValueAnimators!![i]!!.setFloatValues(
+                        mFFTPoints[i * 4],
+                        mFFTPoints[2] - dbValue * fudgeFactor
+                    )
                 }
             } else {
                 if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
-                    mValueAnimators[i].setFloatValues(mFFTPoints[i * 4 + 1], mFFTPoints[3] - (dbValue * fudgeFactor));
+                    mValueAnimators!![i]!!.setFloatValues(
+                        mFFTPoints[i * 4 + 1],
+                        mFFTPoints[3] - dbValue * fudgeFactor
+                    )
                 } else if (mGravity == GRAVITY_TOP) {
-                    mValueAnimators[i].setFloatValues(mFFTPoints[i * 4 + 1], mFFTPoints[3] + (dbValue * fudgeFactor));
+                    mValueAnimators!![i]!!.setFloatValues(
+                        mFFTPoints[i * 4 + 1],
+                        mFFTPoints[3] + dbValue * fudgeFactor
+                    )
                 }
             }
-            mValueAnimators[i].start();
+            mValueAnimators!![i]!!.start()
+            i++
         }
         if (mCenterMirrored) {
-            for (; i < mUnits; i++) {
-                int j = mUnits - (i + 1);
-                if (mValueAnimators[i] == null) continue;
-                mValueAnimators[i].cancel();
-                rfk = fft[j * 2 + 2];
-                ifk = fft[j * 2 + 3];
-                magnitude = rfk * rfk + ifk * ifk;
-                dbValue = magnitude > 0 ? (int) (10 * Math.log10(magnitude)) : 0;
+            while (i < mUnits) {
+                val j = mUnits - (i + 1)
+                if (mValueAnimators!![i] == null) {
+                    i++
+                    continue
+                }
+                mValueAnimators!![i]!!.cancel()
+                rfk = fft!![j * 2 + 2]
+                ifk = fft[j * 2 + 3]
+                magnitude = (rfk * rfk + ifk * ifk).toFloat()
+                dbValue = if (magnitude > 0) (10 * log10(magnitude.toDouble())).toInt() else 0
                 if (mSmoothingEnabled) {
                     if (mFFTAverage == null) {
-                        setupFFTAverage();
+                        setupFFTAverage()
                     }
-                    dbValue = mFFTAverage[i].average(dbValue);
+                    dbValue = mFFTAverage!![i]!!.average(dbValue)
                 }
                 if (mVertical) {
                     if (mLeftInLandscape || mGravity == GRAVITY_TOP) {
-                        mValueAnimators[i].setFloatValues(mFFTPoints[i * 4], dbValue * fudgeFactor);
+                        mValueAnimators!![i]!!.setFloatValues(
+                            mFFTPoints[i * 4],
+                            (dbValue * fudgeFactor).toFloat()
+                        )
                     } else if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
-                        mValueAnimators[i].setFloatValues(mFFTPoints[i * 4], mFFTPoints[2] - (dbValue * fudgeFactor));
+                        mValueAnimators!![i]!!.setFloatValues(
+                            mFFTPoints[i * 4],
+                            mFFTPoints[2] - dbValue * fudgeFactor
+                        )
                     }
                 } else {
                     if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
-                        mValueAnimators[i].setFloatValues(mFFTPoints[i * 4 + 1], mFFTPoints[3] - (dbValue * fudgeFactor));
+                        mValueAnimators!![i]!!
+                            .setFloatValues(
+                                mFFTPoints[i * 4 + 1],
+                                mFFTPoints[3] - dbValue * fudgeFactor
+                            )
                     } else if (mGravity == GRAVITY_TOP) {
-                        mValueAnimators[i].setFloatValues(mFFTPoints[i * 4 + 1], mFFTPoints[3] + (dbValue * fudgeFactor));
+                        mValueAnimators!![i]!!
+                            .setFloatValues(
+                                mFFTPoints[i * 4 + 1],
+                                mFFTPoints[3] + dbValue * fudgeFactor
+                            )
                     }
                 }
-                mValueAnimators[i].start();
+                mValueAnimators!![i]!!.start()
+                i++
             }
         }
     }
 
-    @Override
-    public void onFFTUpdate(byte[] fft) {
-        onDataCapture(fft);
+    override fun onFFTUpdate(bytes: ByteArray?) {
+        onDataCapture(bytes)
     }
 
-    @Override
-    public void draw(Canvas canvas) {
-        canvas.scale(1, 1, mWidth / 2f, mHeight / 2f);
-        canvas.drawLines(mFFTPoints, mPaint);
+    override fun draw(canvas: Canvas) {
+        canvas.scale(1f, 1f, mWidth / 2f, mHeight / 2f)
+        canvas.drawLines(mFFTPoints, mPaint)
         if (mVerticalMirror) {
             if (mVertical) {
-                canvas.scale(-1, 1, mWidth / 2f, mHeight / 2f);
+                canvas.scale(-1f, 1f, mWidth / 2f, mHeight / 2f)
             } else {
-                canvas.scale(1, -1, mWidth / 2f, mHeight / 2f);
+                canvas.scale(1f, -1f, mWidth / 2f, mHeight / 2f)
             }
-            canvas.drawLines(mFFTPoints, mPaint);
+            canvas.drawLines(mFFTPoints, mPaint)
         }
     }
 
-    @Override
-    public void destroy() {
-        mColorController.stopLavaLamp();
+    override fun destroy() {
+        mColorController.stopLavaLamp()
     }
 
-    @Override
-    public void onVisualizerLinkChanged(boolean linked) {
+    override fun onVisualizerLinkChanged(linked: Boolean) {
         if (!linked) {
-            mColorController.stopLavaLamp();
+            mColorController.stopLavaLamp()
         }
     }
 
-    @Override
-    public void onUpdateColor(int color) {
-        mColor = color;
-        mPaint.setColor(ColorUtils.setAlphaComponent(mColor, mUnitsOpacity));
+    override fun onUpdateColor(color: Int) {
+        mColor = color
+        mPaint.color = ColorUtils.setAlphaComponent(mColor, mUnitsOpacity)
     }
 
-    public void updateSettings() {
-        mDbFuzzFactor = mPref.getSolidFudge();
-        mSmoothingEnabled = mPref.isSmoothEnabled();
-        mCenterMirrored = mPref.isCenterMirror();
-        mVerticalMirror = mPref.isVerticalMirror();
-        mGravity = mPref.getGravity();
-        mRounded = mPref.isSolidRounded();
-        int units = mPref.getSolidLineCount();
+    private fun updateSettings() {
+        mDbFuzzFactor = mPref.solidFudge
+        mSmoothingEnabled = mPref.isSmoothEnabled
+        mCenterMirrored = mPref.isCenterMirror
+        mVerticalMirror = mPref.isVerticalMirror
+        mLeftInLandscape = mPref.isLeftInLandscape
+        mGravity = mPref.gravity
+        mRounded = mPref.isSolidRounded
+        val units = mPref.solidLineCount
         if (units != mUnits) {
-            stopAnimation(mUnits);
-            mUnits = units;
-            mFFTPoints = new float[mUnits * 4];
+            stopAnimation(mUnits)
+            mUnits = units
+            mFFTPoints = FloatArray(mUnits * 4)
             if (mSmoothingEnabled) {
-                setupFFTAverage();
+                setupFFTAverage()
             }
-            onSizeChanged(0, 0, 0, 0);
+            onSizeChanged(0, 0, 0, 0)
         }
         if (mSmoothingEnabled) {
             if (mFFTAverage == null) {
-                setupFFTAverage();
+                setupFFTAverage()
             }
         } else {
-            mFFTAverage = null;
+            mFFTAverage = null
         }
-        mUnitsOpacity = mPref.getSolidOvacity();
-        mPaint.setColor(ColorUtils.setAlphaComponent(mColor, mUnitsOpacity));
-        postInvalidate();
+        mUnitsOpacity = mPref.solidOvacity
+        mPaint.color = ColorUtils.setAlphaComponent(mColor, mUnitsOpacity)
+        postInvalidate()
     }
 
-    private void setupFFTAverage() {
-        mFFTAverage = new FFTAverage[mUnits];
-        for (int i = 0; i < mUnits; i++) {
-            mFFTAverage[i] = new FFTAverage();
+    private fun setupFFTAverage() {
+        mFFTAverage = arrayOfNulls(mUnits)
+        for (i in 0 until mUnits) {
+            mFFTAverage!![i] = FFTAverage()
         }
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences prefs, String keys) {
-        updateSettings();
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
+        updateSettings()
+    }
+
+    companion object {
+        private const val GRAVITY_BOTTOM = 0
+        private const val GRAVITY_TOP = 1
+        private const val GRAVITY_CENTER = 2
     }
 }

@@ -1,68 +1,51 @@
-package otang.pulse.lib;
+@file:Suppress("DEPRECATION")
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.os.Build;
-import android.view.WindowManager;
+package otang.pulse.lib
 
-import otang.pulse.lib.util.PulseConfig;
+import android.content.Context
+import android.graphics.Canvas
+import android.os.Build
+import android.view.WindowManager
+import otang.pulse.lib.util.PulseConfig
 
-public abstract class Renderer implements VisualizerStreamHandler.Listener {
+abstract class Renderer(
+    protected var mContext: Context,
+    view: VisualizerView,
+    colorController: ColorController
+) : VisualizerStreamHandler.Listener {
+    protected var mView: VisualizerView
+    protected var mColorController: ColorController
+    var mIsValidStream = false
+    private val mPulseFPSToMs: Long
+    private var mRenderCounter: Long
+    protected var mPref: PulseConfig = PulseConfig(mContext)
 
-    protected Context mContext;
-    protected VisualizerView mView;
-    protected ColorController mColorController;
-    protected boolean mIsValidStream;
-    private final long mPulseFPSToMs;
-    private long mRenderCounter;
-    protected PulseConfig mPref;
-
-    public Renderer(Context context, VisualizerView view, ColorController colorController) {
-        mContext = context;
-        mPref = new PulseConfig(context);
-        mView = view;
-        mColorController = colorController;
-        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        mRenderCounter = System.currentTimeMillis();
-        long mPulseFPS = Build.VERSION.SDK_INT < Build.VERSION_CODES.R ? (int) wm.getDefaultDisplay().getRefreshRate() : (int) context.getDisplay().getRefreshRate();
-        mPulseFPSToMs = 1000 / mPulseFPS;
+    init {
+        mView = view
+        mColorController = colorController
+        val wm = mContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        mRenderCounter = System.currentTimeMillis()
+        val mPulseFPS =
+            (if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) wm.defaultDisplay.refreshRate.toInt() else mContext.display!!
+                .refreshRate.toInt()).toLong()
+        mPulseFPSToMs = 1000 / mPulseFPS
     }
 
-    protected final void postInvalidate() {
-        long mCurrentTime = System.currentTimeMillis();
-        long mCurrentCounter = mCurrentTime - mRenderCounter;
+    protected fun postInvalidate() {
+        val mCurrentTime = System.currentTimeMillis()
+        val mCurrentCounter = mCurrentTime - mRenderCounter
         if (mCurrentCounter >= mPulseFPSToMs) {
-            mRenderCounter = mCurrentTime;
+            mRenderCounter = mCurrentTime
         }
-        mView.invalidate();
+        mView.invalidate()
     }
 
-    public abstract void draw(Canvas canvas);
-
-    @Override
-    public void onWaveFormUpdate(byte[] bytes) {
-    }
-
-    @Override
-    public void onFFTUpdate(byte[] fft) {
-    }
-
-    public void onVisualizerLinkChanged(boolean linked) {
-    }
-
-    public void destroy() {
-    }
-
-    public void setLeftInLandscape(boolean leftInLandscape) {
-    }
-
-    public void onSizeChanged(int w, int h, int oldw, int oldh) {
-    }
-
-    public void onUpdateColor(int color) {
-    }
-
-    public boolean isValidStream() {
-        return mIsValidStream;
-    }
+    abstract fun draw(canvas: Canvas)
+    override fun onWaveFormUpdate(bytes: ByteArray?) {}
+    override fun onFFTUpdate(bytes: ByteArray?) {}
+    open fun onVisualizerLinkChanged(linked: Boolean) {}
+    open fun destroy() {}
+    open fun setLeftInLandscape(leftInLandscape: Boolean) {}
+    open fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {}
+    open fun onUpdateColor(color: Int) {}
 }

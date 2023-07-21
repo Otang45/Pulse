@@ -1,23 +1,25 @@
-package otang.pulse.lib;
+package otang.pulse.lib
 
-import java.util.ArrayDeque;
+import java.util.ArrayDeque
+import kotlin.math.roundToInt
 
-class FFTAverage {
-
-    private static final int WINDOW_LENGTH = 2;
-    private static final float WINDOW_LENGTH_F = WINDOW_LENGTH;
-    private final ArrayDeque<Float> window = new ArrayDeque<>(WINDOW_LENGTH);
-    private float average;
-
-    int average(int dB) {
+internal class FFTAverage {
+    private val window = ArrayDeque<Float>(WINDOW_LENGTH)
+    private var average = 0f
+    fun average(dB: Int): Int {
         // Waiting until window is full
-        if (window.size() >= WINDOW_LENGTH) {
-            Float first = window.pollFirst();
-            if (first != null) average -= first;
+        if (window.size >= WINDOW_LENGTH) {
+            val first = window.pollFirst()
+            if (first != null) average -= first
         }
-        float newValue = dB / WINDOW_LENGTH_F;
-        average += newValue;
-        window.offerLast(newValue);
-        return Math.round(average);
+        val newValue = dB / WINDOW_LENGTH_F
+        average += newValue
+        window.offerLast(newValue)
+        return average.roundToInt()
+    }
+
+    companion object {
+        private const val WINDOW_LENGTH = 2
+        private const val WINDOW_LENGTH_F = WINDOW_LENGTH.toFloat()
     }
 }

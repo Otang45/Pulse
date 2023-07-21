@@ -1,110 +1,91 @@
-package otang.pulse.lib;
+package otang.pulse.lib
 
-import android.animation.ValueAnimator;
-import android.graphics.Color;
+import android.animation.ValueAnimator
+import android.animation.ValueAnimator.AnimatorUpdateListener
+import android.annotation.SuppressLint
+import android.graphics.Color
 
-public class ColorAnimator implements ValueAnimator.AnimatorUpdateListener {
-
-    public interface ColorAnimationListener {
-        default void onColorChanged(ColorAnimator colorAnimator, int color) {
-        }
-
-        default void onStartAnimation(ColorAnimator colorAnimator, int firstColor) {
-        }
-
-        default void onStopAnimation(ColorAnimator colorAnimator, int lastColor) {
-        }
+class ColorAnimator @JvmOverloads constructor(
+    @SuppressLint("Recycle") valueAnimator: ValueAnimator = ValueAnimator.ofFloat(0f, 1f),
+    private var mAnimTime: Long = ANIM_DEF_DURATION.toLong(),
+    fromColor: Int = Color.parseColor(
+        RED
+    ),
+    toColor: Int = Color.parseColor(BLUE)
+) : AnimatorUpdateListener {
+    interface ColorAnimationListener {
+        fun onColorChanged(colorAnimator: ColorAnimator?, color: Int) {}
+        fun onStartAnimation(colorAnimator: ColorAnimator?, firstColor: Int) {}
+        fun onStopAnimation(colorAnimator: ColorAnimator?, lastColor: Int) {}
     }
 
-    public static final int ANIM_DEF_DURATION = 10 * 1000;
-    public static final String RED = "#ffff8080";
-    public static final String BLUE = "#ff8080ff";
-    protected final float[] from = new float[3], to = new float[3], hsv = new float[3];
-    protected ValueAnimator mColorAnim;
-    protected long mAnimTime;
-    protected int mFromColor = Color.parseColor(RED);
-    protected int mToColor = Color.parseColor(BLUE);
-    protected int mLastColor = Color.parseColor(RED);
-    protected boolean mIsRunning;
-    protected ColorAnimationListener mListener;
+    private val from = FloatArray(3)
+    private val to = FloatArray(3)
+    private val hsv = FloatArray(3)
+    private var mColorAnim: ValueAnimator
+    private var mFromColor = Color.parseColor(RED)
+    private var mToColor = Color.parseColor(BLUE)
+    private var currentColor = Color.parseColor(RED)
+    private var isRunning = false
+    private var mListener: ColorAnimationListener? = null
 
-    public ColorAnimator() {
-        this(ValueAnimator.ofFloat(0, 1));
+    init {
+        mFromColor = fromColor
+        mToColor = toColor
+        mColorAnim = valueAnimator
+        mColorAnim.addUpdateListener(this)
     }
 
-    public ColorAnimator(ValueAnimator valueAnimator) {
-        this(valueAnimator, ANIM_DEF_DURATION);
-    }
-
-    public ColorAnimator(ValueAnimator valueAnimator, long animDurationMillis) {
-        this(valueAnimator, animDurationMillis, Color.parseColor(RED), Color.parseColor(BLUE));
-    }
-
-    public ColorAnimator(ValueAnimator valueAnimator, long animDurationMillis, int fromColor, int toColor) {
-        mAnimTime = animDurationMillis;
-        mFromColor = fromColor;
-        mToColor = toColor;
-        mColorAnim = valueAnimator;
-        mColorAnim.addUpdateListener(this);
-    }
-
-    public void start() {
-        stop();
-        Color.colorToHSV(mFromColor, from);
-        Color.colorToHSV(mToColor, to);
-        mColorAnim.setDuration(mAnimTime);
-        mColorAnim.setRepeatMode(ValueAnimator.REVERSE);
-        mColorAnim.setRepeatCount(ValueAnimator.INFINITE);
+    fun start() {
+        stop()
+        Color.colorToHSV(mFromColor, from)
+        Color.colorToHSV(mToColor, to)
+        mColorAnim.duration = mAnimTime
+        mColorAnim.repeatMode = ValueAnimator.REVERSE
+        mColorAnim.repeatCount = ValueAnimator.INFINITE
         if (mListener != null) {
-            mListener.onStartAnimation(this, mFromColor);
+            mListener!!.onStartAnimation(this, mFromColor)
         }
-        mColorAnim.start();
-        mIsRunning = true;
+        mColorAnim.start()
+        isRunning = true
     }
 
-    public void stop() {
-        if (mColorAnim.isStarted()) {
-            mColorAnim.end();
-            mIsRunning = false;
+    fun stop() {
+        if (mColorAnim.isStarted) {
+            mColorAnim.end()
+            isRunning = false
             if (mListener != null) {
-                mListener.onStopAnimation(this, mLastColor);
+                mListener!!.onStopAnimation(this, currentColor)
             }
         }
     }
 
-    public boolean isRunning() {
-        return mIsRunning;
-    }
-
-    public void setAnimationTime(long millis) {
+    fun setAnimationTime(millis: Long) {
         if (mAnimTime != millis) {
-            mAnimTime = millis;
-            if (mColorAnim.isRunning()) {
-                start();
+            mAnimTime = millis
+            if (mColorAnim.isRunning) {
+                start()
             }
         }
     }
 
-    public void setColorAnimatorListener(ColorAnimationListener listener) {
-        mListener = listener;
+    fun setColorAnimatorListener(listener: ColorAnimationListener) {
+        mListener = listener
     }
 
-    public void removeColorAnimatorListener(ColorAnimationListener listener) {
-        mListener = null;
-    }
-
-    public void onAnimationUpdate(ValueAnimator animation) {
-        // Transition along each axis of HSV (hue, saturation, value)
-        hsv[0] = from[0] + (to[0] - from[0]) * animation.getAnimatedFraction();
-        hsv[1] = from[1] + (to[1] - from[1]) * animation.getAnimatedFraction();
-        hsv[2] = from[2] + (to[2] - from[2]) * animation.getAnimatedFraction();
-        mLastColor = Color.HSVToColor(hsv);
+    override fun onAnimationUpdate(animation: ValueAnimator) {
+        hsv[0] = from[0] + (to[0] - from[0]) * animation.animatedFraction
+        hsv[1] = from[1] + (to[1] - from[1]) * animation.animatedFraction
+        hsv[2] = from[2] + (to[2] - from[2]) * animation.animatedFraction
+        currentColor = Color.HSVToColor(hsv)
         if (mListener != null) {
-            mListener.onColorChanged(this, mLastColor);
+            mListener!!.onColorChanged(this, currentColor)
         }
     }
 
-    public int getCurrentColor() {
-        return mLastColor;
+    companion object {
+        const val ANIM_DEF_DURATION = 10 * 1000
+        const val RED = "#ffff8080"
+        const val BLUE = "#ff8080ff"
     }
 }

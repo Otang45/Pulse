@@ -1,87 +1,79 @@
-package otang.pulse.lib;
+package otang.pulse.lib
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.Context
+import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import otang.pulse.lib.ColorAnimator.ColorAnimationListener
+import otang.pulse.lib.util.ColorUtils
+import otang.pulse.lib.util.PulseConfig
 
-import otang.pulse.lib.util.ColorUtils;
-import otang.pulse.lib.util.PulseConfig;
+class ColorController(private val mContext: Context) : ColorAnimationListener,
+    OnSharedPreferenceChangeListener {
+    private var mRenderer: Renderer? = null
+    private val mLavaLamp: ColorAnimator = ColorAnimator()
+    private var mColorType = 0
+    private val mAccentColor: Int
+    private var mColor = 0
+    private val mPref: PulseConfig
 
-public class ColorController
-        implements ColorAnimator.ColorAnimationListener,
-        SharedPreferences.OnSharedPreferenceChangeListener {
-
-    public static final int COLOR_TYPE_ACCENT = 0;
-    public static final int COLOR_TYPE_USER = 1;
-    public static final int COLOR_TYPE_LAVALAMP = 2;
-    private final Context mContext;
-    private Renderer mRenderer;
-    private final ColorAnimator mLavaLamp;
-    private int mColorType;
-    private final int mAccentColor;
-    private int mColor;
-    private final PulseConfig mPref;
-
-    public ColorController(Context context) {
-        mContext = context;
-        mLavaLamp = new ColorAnimator();
-        mLavaLamp.setColorAnimatorListener(this);
-        mAccentColor = getAccentColor();
-        mPref = new PulseConfig(context);
-        mPref.registerListener(this);
-        updateSettings();
+    init {
+        mLavaLamp.setColorAnimatorListener(this)
+        mAccentColor = accentColor
+        mPref = PulseConfig(mContext)
+        mPref.registerListener(this)
+        updateSettings()
     }
 
-    void setRenderer(Renderer renderer) {
-        mRenderer = renderer;
-        notifyRenderer();
+    fun setRenderer(renderer: Renderer) {
+        mRenderer = renderer
+        notifyRenderer()
     }
 
-    void updateSettings() {
+    private fun updateSettings() {
         if (mColorType == COLOR_TYPE_LAVALAMP) {
-            stopLavaLamp();
+            stopLavaLamp()
         }
-        mColorType = mPref.getPulseColor();
-        mColor = mPref.getColorCustom();
-        int lava_speed = mPref.getLavaSpeed();
-        mLavaLamp.setAnimationTime(lava_speed);
-        notifyRenderer();
+        mColorType = mPref.pulseColor
+        mColor = mPref.colorCustom
+        val lavaSpeed = mPref.lavaSpeed
+        mLavaLamp.setAnimationTime(lavaSpeed.toLong())
+        notifyRenderer()
     }
 
-    void notifyRenderer() {
-        if (mRenderer != null) {
-            if (mColorType == COLOR_TYPE_ACCENT) {
-                mRenderer.onUpdateColor(mAccentColor);
-            } else if (mColorType == COLOR_TYPE_USER) {
-                mRenderer.onUpdateColor(mColor);
-            } else if (mColorType == COLOR_TYPE_LAVALAMP && mRenderer.isValidStream()) {
-                startLavaLamp();
-            }
+    private fun notifyRenderer() {
+        if (mColorType == COLOR_TYPE_ACCENT) {
+            mRenderer?.onUpdateColor(mAccentColor)
+        } else if (mColorType == COLOR_TYPE_USER) {
+            mRenderer?.onUpdateColor(mColor)
+        } else if (mColorType == COLOR_TYPE_LAVALAMP && mRenderer?.mIsValidStream == true) {
+            startLavaLamp()
         }
     }
 
-    void startLavaLamp() {
+    fun startLavaLamp() {
         if (mColorType == COLOR_TYPE_LAVALAMP) {
-            mLavaLamp.start();
+            mLavaLamp.start()
         }
     }
 
-    void stopLavaLamp() {
-        mLavaLamp.stop();
+    fun stopLavaLamp() {
+        mLavaLamp.stop()
     }
 
-    int getAccentColor() {
-        return ColorUtils.getPrimaryColor(mContext);
+    private val accentColor: Int
+        get() = ColorUtils.getPrimaryColor(mContext)
+
+    override fun onColorChanged(colorAnimator: ColorAnimator?, color: Int) {
+        mRenderer?.onUpdateColor(color)
     }
 
-    @Override
-    public void onColorChanged(ColorAnimator colorAnimator, int color) {
-        if (mRenderer != null) {
-            mRenderer.onUpdateColor(color);
-        }
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
+        updateSettings()
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences prefs, String keys) {
-        updateSettings();
+    companion object {
+        const val COLOR_TYPE_ACCENT = 0
+        const val COLOR_TYPE_USER = 1
+        const val COLOR_TYPE_LAVALAMP = 2
     }
 }

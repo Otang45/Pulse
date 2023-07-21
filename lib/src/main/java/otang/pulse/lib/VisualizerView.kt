@@ -1,264 +1,223 @@
-package otang.pulse.lib;
+package otang.pulse.lib
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.graphics.Canvas;
-import android.os.PowerManager;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import android.graphics.Canvas
+import android.os.PowerManager
+import android.util.AttributeSet
+import android.view.View
+import otang.pulse.lib.PulseController.PulseStateListener
+import otang.pulse.lib.util.PulseConfig
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+class VisualizerView @JvmOverloads constructor(
+    context: Context?,
+    attrs: AttributeSet?,
+    defStyleAttr: Int = 0,
+    defStyleRes: Int = 0
+) : View(context, attrs, defStyleAttr, defStyleRes), PulseController,
+    OnSharedPreferenceChangeListener {
+    constructor(context: Context) : this(context, null)
 
-import java.util.ArrayList;
-import java.util.List;
-
-import otang.pulse.lib.util.PulseConfig;
-
-public class VisualizerView extends View implements PulseController, SharedPreferences.OnSharedPreferenceChangeListener {
-
-    public VisualizerView(@NonNull Context context) {
-        this(context, null);
-    }
-
-    public VisualizerView(Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public VisualizerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        this(context, attrs, defStyleAttr, 0);
-    }
-
-    public VisualizerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        setWillNotDraw(false);
-        init();
-    }
-
-    private static final int RENDER_STYLE_CM = 1;
-    private PulseConfig mPref;
-    private PowerManager mPowerManager;
-    private boolean mPowerSaveModeEnabled;
-    private VisualizerStreamHandler mStreamHandler;
-    private final VisualizerStreamHandler.Listener mStreamListener = new VisualizerStreamHandler.Listener() {
-        @Override
-        public void onStreamAnalyzed(boolean isValid) {
-            if (mRenderer != null) {
-                mRenderer.onStreamAnalyzed(isValid);
+    lateinit var pulsePref: PulseConfig
+    private lateinit var mPowerManager: PowerManager
+    private var mPowerSaveModeEnabled = false
+    private lateinit var mStreamHandler: VisualizerStreamHandler
+    private val mStreamListener: VisualizerStreamHandler.Listener =
+        object : VisualizerStreamHandler.Listener {
+            override fun onStreamAnalyzed(isValid: Boolean) {
+                mRenderer.onStreamAnalyzed(isValid)
+                if (isValid) {
+                    notifyStateListeners(true)
+                    turnOnPulse()
+                } else {
+                    doSilentUnlinkVisualizer()
+                }
             }
-            if (isValid) {
-                notifyStateListeners(true);
-                turnOnPulse();
-            } else {
-                doSilentUnlinkVisualizer();
+
+            override fun onFFTUpdate(bytes: ByteArray?) {
+                if (bytes != null) {
+                    mRenderer.onFFTUpdate(bytes)
+                }
             }
-        }
 
-        @Override
-        public void onFFTUpdate(byte[] bytes) {
-            if (mRenderer != null && bytes != null) {
-                mRenderer.onFFTUpdate(bytes);
-            }
-        }
-
-        @Override
-        public void onWaveFormUpdate(byte[] bytes) {
-            if (mRenderer != null && bytes != null) {
-                mRenderer.onWaveFormUpdate(bytes);
-            }
-        }
-    };
-    private ColorController mColorController;
-    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                mScreenOn = false;
-                doLinkage();
-            } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                mScreenOn = true;
-                doLinkage();
-            } else if (PowerManager.ACTION_POWER_SAVE_MODE_CHANGED.equals(action)) {
-                mPowerSaveModeEnabled = mPowerManager.isPowerSaveMode();
-                doLinkage();
-            }
-        }
-    };
-    private boolean mScreenOn = true;
-    private boolean mLeftInLandscape;
-    private int mPulseStyle;
-    private boolean mAttached;
-    private boolean mLinked;
-    private Renderer mRenderer;
-    private final List<PulseStateListener> mStateListeners = new ArrayList<>();
-    private int mAudioSessionId = -1;
-
-    void init() {
-        mPref = new PulseConfig(getContext());
-        mPref.registerListener(this);
-        mPowerManager = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
-        mPowerSaveModeEnabled = mPowerManager.isPowerSaveMode();
-        mStreamHandler = new VisualizerStreamHandler(getContext(), mStreamListener);
-        mColorController = new ColorController(getContext());
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED);
-        getContext().registerReceiver(mBroadcastReceiver, filter, null, null);
-        updateSettings();
-        doLinkage();
-    }
-
-    void updateSettings() {
-        boolean mIsEnable = mPref.isPulseEnabled();
-        mLeftInLandscape = mPref.isLeftInLandscape();
-        mPulseStyle = mPref.getRenderStyle();
-        mAttached = mIsEnable;
-        loadRenderer();
-        doLinkage();
-        invalidate();
-    }
-
-    private void loadRenderer() {
-        final boolean isRendering = shouldDrawPulse();
-        if (isRendering) {
-            mStreamHandler.pause();
-        }
-        if (mRenderer != null) {
-            mRenderer.destroy();
-            mRenderer = null;
-        }
-        mRenderer = getRenderer();
-        mColorController.setRenderer(mRenderer);
-        mRenderer.setLeftInLandscape(mLeftInLandscape);
-        if (isRendering) {
-            mRenderer.onStreamAnalyzed(true);
-            mStreamHandler.resume();
-        }
-    }
-
-    public boolean shouldDrawPulse() {
-        return mLinked && mStreamHandler.isValidStream() && mRenderer != null;
-    }
-
-    private Renderer getRenderer() {
-        if (mPulseStyle == RENDER_STYLE_CM) {
-            return new SolidLineRenderer(getContext(), this, mColorController);
-        }
-        return new FadingBlockRenderer(getContext(), this, mColorController);
-    }
-
-    private void notifyStateListeners(boolean isStarting) {
-        for (PulseStateListener listener : mStateListeners) {
-            if (listener != null) {
-                listener.onPulseStateChanged(isStarting);
-            }
-        }
-    }
-
-    private void turnOnPulse() {
-        if (shouldDrawPulse()) {
-            mStreamHandler.resume(); // let bytes hit visualizer
-        }
-    }
-
-    private void doSilentUnlinkVisualizer() {
-        if (mStreamHandler != null) {
-            if (mLinked) {
-                mStreamHandler.unlink();
-                mLinked = false;
-            }
-        }
-    }
-
-    private void doLinkage() {
-        if (isUnlinkRequired()) {
-            if (mLinked) {
-                doUnlinkVisualizer();
-            }
-        } else {
-            if (isAbleToLink()) {
-                doLinkVisualizer();
-            } else if (mLinked) {
-                doUnlinkVisualizer();
-            }
-        }
-    }
-
-    private boolean isUnlinkRequired() {
-        return !mScreenOn || mPowerSaveModeEnabled || !mAttached;
-    }
-
-    public void doUnlinkVisualizer() {
-        if (mStreamHandler != null) {
-            mStreamHandler.unlink();
-            mLinked = false;
-            if (mRenderer != null) {
-                mRenderer.onVisualizerLinkChanged(false);
-            }
-            this.postInvalidate();
-            notifyStateListeners(false);
-        }
-    }
-
-    private boolean isAbleToLink() {
-        return mScreenOn && !mPowerSaveModeEnabled && mAttached;
-    }
-
-    public void doLinkVisualizer() {
-        if (mStreamHandler != null) {
-            if (!mLinked && mAudioSessionId != -1) {
-                mStreamHandler.link(mAudioSessionId);
-                mLinked = true;
-                if (mRenderer != null) {
-                    mRenderer.onVisualizerLinkChanged(true);
+            override fun onWaveFormUpdate(bytes: ByteArray?) {
+                if (bytes != null) {
+                    mRenderer.onWaveFormUpdate(bytes)
                 }
             }
         }
+    private lateinit var mColorController: ColorController
+    private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action = intent.action
+            if (Intent.ACTION_SCREEN_OFF == action) {
+                mScreenOn = false
+                doLinkage()
+            } else if (Intent.ACTION_SCREEN_ON == action) {
+                mScreenOn = true
+                doLinkage()
+            } else if (PowerManager.ACTION_POWER_SAVE_MODE_CHANGED == action) {
+                mPowerSaveModeEnabled = mPowerManager.isPowerSaveMode
+                doLinkage()
+            }
+        }
+    }
+    private var mScreenOn = true
+    private var mLeftInLandscape = false
+    private var mPulseStyle = 0
+    private var mAttached = false
+    private var mLinked = false
+    private lateinit var mRenderer: Renderer
+    private val mStateListeners: MutableList<PulseStateListener> = ArrayList()
+    private var mAudioSessionId = -1
+
+    init {
+        setWillNotDraw(false)
+        init()
     }
 
-    public void setAudioSessionId(int id) {
-        mAudioSessionId = id;
-        doLinkage();
+    private fun init() {
+        pulsePref = PulseConfig(context)
+        pulsePref.registerListener(this)
+        mPowerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        mPowerSaveModeEnabled = mPowerManager.isPowerSaveMode
+        mStreamHandler = VisualizerStreamHandler(mStreamListener)
+        mColorController = ColorController(context)
+        mColorController.setRenderer(renderer)
+        val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+        filter.addAction(Intent.ACTION_SCREEN_ON)
+        filter.addAction(Intent.ACTION_SCREEN_OFF)
+        filter.addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+        context.registerReceiver(mBroadcastReceiver, filter, null, null)
+        updateSettings()
+        doLinkage()
     }
 
-    public PulseConfig getPulsePref() {
-        return mPref;
+    private fun updateSettings() {
+        val mIsEnable = pulsePref.isPulseEnabled
+        mLeftInLandscape = pulsePref.isLeftInLandscape
+        mPulseStyle = pulsePref.renderStyle
+        mAttached = mIsEnable
+        loadRenderer()
+        doLinkage()
+        invalidate()
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        if (mRenderer != null) {
-            mRenderer.onSizeChanged(w, h, oldw, oldh);
+    private fun loadRenderer() {
+        mRenderer = renderer
+        val isRendering = shouldDrawPulse()
+        if (isRendering) {
+            mStreamHandler.pause()
+        }
+        mRenderer.destroy()
+        mRenderer = renderer
+        mColorController.setRenderer(mRenderer)
+        mRenderer.setLeftInLandscape(mLeftInLandscape)
+        if (isRendering) {
+            mRenderer.onStreamAnalyzed(true)
+            mStreamHandler.resume()
         }
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
+    private fun shouldDrawPulse(): Boolean {
+        return mLinked && mStreamHandler.isValidStream
+    }
+
+    private val renderer: Renderer
+        get() = if (mPulseStyle == RENDER_STYLE_CM) {
+            SolidLineRenderer(context, this, mColorController)
+        } else FadingBlockRenderer(context, this, mColorController)
+
+    private fun notifyStateListeners(isStarting: Boolean) {
+        for (listener in mStateListeners) {
+            listener.onPulseStateChanged(isStarting)
+        }
+    }
+
+    private fun turnOnPulse() {
         if (shouldDrawPulse()) {
-            mRenderer.draw(canvas);
+            mStreamHandler.resume() // let bytes hit visualizer
         }
     }
 
-    @Override
-    public void addCallback(PulseStateListener listener) {
-        mStateListeners.add(listener);
+    private fun doSilentUnlinkVisualizer() {
+        if (mLinked) {
+            mStreamHandler.unlink()
+            mLinked = false
+        }
+    }
+
+    private fun doLinkage() {
+        if (isUnlinkRequired) {
+            if (mLinked) {
+                doUnlinkVisualizer()
+            }
+        } else {
+            if (isAbleToLink) {
+                doLinkVisualizer()
+            } else if (mLinked) {
+                doUnlinkVisualizer()
+            }
+        }
+    }
+
+    private val isUnlinkRequired: Boolean
+        get() = !mScreenOn || mPowerSaveModeEnabled || !mAttached
+
+    private fun doUnlinkVisualizer() {
+        mStreamHandler.unlink()
+        mLinked = false
+        mRenderer.onVisualizerLinkChanged(false)
+        this.postInvalidate()
+        notifyStateListeners(false)
+    }
+
+    private val isAbleToLink: Boolean
+        get() = mScreenOn && !mPowerSaveModeEnabled && mAttached
+
+    private fun doLinkVisualizer() {
+        if (!mLinked && mAudioSessionId != -1) {
+            mStreamHandler.link(mAudioSessionId)
+            mLinked = true
+            mRenderer.onVisualizerLinkChanged(true)
+        }
+    }
+
+    fun setAudioSessionId(id: Int) {
+        mAudioSessionId = id
+        doLinkage()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        mRenderer.onSizeChanged(w, h, oldw, oldh)
+    }
+
+    override fun onDraw(canvas: Canvas) {
         if (shouldDrawPulse()) {
-            listener.onPulseStateChanged(true);
+            mRenderer.draw(canvas)
         }
     }
 
-    @Override
-    public void removeCallback(PulseStateListener listener) {
-        mStateListeners.remove(listener);
+    override fun addCallback(listener: PulseStateListener) {
+        mStateListeners.add(listener)
+        if (shouldDrawPulse()) {
+            listener.onPulseStateChanged(true)
+        }
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences prefs, String keys) {
-        updateSettings();
+    override fun removeCallback(listener: PulseStateListener) {
+        mStateListeners.remove(listener)
+    }
+
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
+        updateSettings()
+    }
+
+    companion object {
+        private const val RENDER_STYLE_CM = 1
     }
 }

@@ -1,12 +1,10 @@
-package otang.pulse.lib;
+package otang.pulse.lib
 
-public interface PulseController {
+interface PulseController {
+    interface PulseStateListener {
+        fun onPulseStateChanged(isRunning: Boolean)
+    }
 
-  interface PulseStateListener {
-    void onPulseStateChanged(boolean isRunning);
-  }
-
-  void addCallback(PulseStateListener listener);
-
-  void removeCallback(PulseStateListener listener);
+    fun addCallback(listener: PulseStateListener)
+    fun removeCallback(listener: PulseStateListener)
 }
