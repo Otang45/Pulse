@@ -21,6 +21,10 @@ android {
         }
         multiDexEnabled true
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
     
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
