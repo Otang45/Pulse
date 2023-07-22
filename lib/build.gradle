@@ -47,7 +47,7 @@ afterEvaluate {
                 } else {
                     from components.java
                 }
-                artifact androidSourcesJar
+                // artifact androidSourcesJar
                 // artifacts javaDocJar
                 // Mostly self-explanatory metadata
                 pom {
@@ -74,6 +74,7 @@ afterEvaluate {
                         url = 'https://github.com/Otang45/Pulse'
                     }
                 }
+                generateMetadataFileForReleasePublication.dependsOn androidSourcesJar
             }
         }
     }
