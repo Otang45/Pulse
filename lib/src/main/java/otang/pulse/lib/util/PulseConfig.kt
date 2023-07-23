@@ -29,9 +29,9 @@ class PulseConfig(ctx: Context?) {
             editor.putBoolean(PREF_PULSE_LEFT, leftInLandscape).commit()
         }
     var renderStyle: Int
-        get() = pref.getInt(PREF_PULSE_RENDER, 1)
+        get() = Integer.valueOf(pref.getString(PREF_PULSE_RENDER, "1").toString())
         set(renderStyle) {
-            editor.putInt(PREF_PULSE_RENDER, renderStyle).commit()
+            editor.putString(PREF_PULSE_RENDER, renderStyle.toString()).commit()
         }
     var isCenterMirror: Boolean
         get() = pref.getBoolean(PREF_PULSE_CENTER_MIRRORED, false)
@@ -44,9 +44,9 @@ class PulseConfig(ctx: Context?) {
             editor.putBoolean(PREF_PULSE_VERTICAL_MIRROR, verticalMirror).commit()
         }
     var gravity: Int
-        get() = pref.getInt(PREF_PULSE_GRAVITY, 0)
+        get() = Integer.valueOf(pref.getString(PREF_PULSE_GRAVITY, "0").toString())
         set(gravity) {
-            editor.putInt(PREF_PULSE_GRAVITY, gravity).commit()
+            editor.putString(PREF_PULSE_GRAVITY, gravity.toString()).commit()
         }
     var isSmoothEnabled: Boolean
         get() = pref.getBoolean(PREF_PULSE_SMOOTH, true)
@@ -54,9 +54,9 @@ class PulseConfig(ctx: Context?) {
             editor.putBoolean(PREF_PULSE_SMOOTH, smoothEnabled).commit()
         }
     var pulseColor: Int
-        get() = pref.getInt(PREF_PULSE_COLOR, 0)
+        get() = Integer.valueOf(pref.getString(PREF_PULSE_COLOR, "0").toString())
         set(pulseColor) {
-            editor.putInt(PREF_PULSE_COLOR, pulseColor).commit()
+            editor.putString(PREF_PULSE_COLOR, pulseColor.toString()).commit()
         }
     var colorCustom: Int
         get() = pref.getInt(PREF_PULSE_COLOR_CUSTOM, -0x6d000001)
