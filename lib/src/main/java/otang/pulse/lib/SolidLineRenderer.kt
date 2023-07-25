@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.core.graphics.ColorUtils
+import otang.pulse.lib.util.PulseConfig
 import kotlin.math.log10
 
 class SolidLineRenderer(context: Context, view: VisualizerView, colorController: ColorController) :
@@ -99,8 +100,7 @@ class SolidLineRenderer(context: Context, view: VisualizerView, colorController:
         }
         barUnit = barWidth + (barUnit - barWidth) * units / (units - 1)
         mPaint.strokeWidth = barWidth
-        mPaint.strokeCap =
-            if (mRounded) Paint.Cap.ROUND else Paint.Cap.BUTT
+        mPaint.strokeCap = if (mRounded) Paint.Cap.ROUND else Paint.Cap.BUTT
         for (i in 0 until mUnits) {
             mFFTPoints[i * 4 + 2] = i * barUnit + barWidth / 2
             mFFTPoints[i * 4] = mFFTPoints[i * 4 + 2]
@@ -129,13 +129,12 @@ class SolidLineRenderer(context: Context, view: VisualizerView, colorController:
         }
         barUnit = barHeight + (barUnit - barHeight) * units / (units - 1)
         mPaint.strokeWidth = barHeight
-        mPaint.strokeCap =
-            if (mRounded) Paint.Cap.ROUND else Paint.Cap.BUTT
+        mPaint.strokeCap = if (mRounded) Paint.Cap.ROUND else Paint.Cap.BUTT
         for (i in 0 until mUnits) {
             mFFTPoints[i * 4 + 3] = i * barUnit + barHeight / 2
             mFFTPoints[i * 4 + 1] = mFFTPoints[i * 4 + 3]
             mFFTPoints[i * 4] = (if (mLeftInLandscape) 0 else startPoint) as Float
-            mFFTPoints[i * 4 + 2] = (if (mLeftInLandscape) 0 else startPoint) as Float
+            mFFTPoints[i * 4 + 2] = (startPoint)
         }
     }
 
@@ -191,25 +190,21 @@ class SolidLineRenderer(context: Context, view: VisualizerView, colorController:
             if (mVertical) {
                 if (mLeftInLandscape || mGravity == GRAVITY_TOP) {
                     mValueAnimators!![i]!!.setFloatValues(
-                        mFFTPoints[i * 4],
-                        (dbValue * fudgeFactor).toFloat()
+                        mFFTPoints[i * 4], (dbValue * fudgeFactor).toFloat()
                     )
                 } else if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
                     mValueAnimators!![i]!!.setFloatValues(
-                        mFFTPoints[i * 4],
-                        mFFTPoints[2] - dbValue * fudgeFactor
+                        mFFTPoints[i * 4], mFFTPoints[2] - dbValue * fudgeFactor
                     )
                 }
             } else {
                 if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
                     mValueAnimators!![i]!!.setFloatValues(
-                        mFFTPoints[i * 4 + 1],
-                        mFFTPoints[3] - dbValue * fudgeFactor
+                        mFFTPoints[i * 4 + 1], mFFTPoints[3] - dbValue * fudgeFactor
                     )
                 } else if (mGravity == GRAVITY_TOP) {
                     mValueAnimators!![i]!!.setFloatValues(
-                        mFFTPoints[i * 4 + 1],
-                        mFFTPoints[3] + dbValue * fudgeFactor
+                        mFFTPoints[i * 4 + 1], mFFTPoints[3] + dbValue * fudgeFactor
                     )
                 }
             }
@@ -237,28 +232,22 @@ class SolidLineRenderer(context: Context, view: VisualizerView, colorController:
                 if (mVertical) {
                     if (mLeftInLandscape || mGravity == GRAVITY_TOP) {
                         mValueAnimators!![i]!!.setFloatValues(
-                            mFFTPoints[i * 4],
-                            (dbValue * fudgeFactor).toFloat()
+                            mFFTPoints[i * 4], (dbValue * fudgeFactor).toFloat()
                         )
                     } else if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
                         mValueAnimators!![i]!!.setFloatValues(
-                            mFFTPoints[i * 4],
-                            mFFTPoints[2] - dbValue * fudgeFactor
+                            mFFTPoints[i * 4], mFFTPoints[2] - dbValue * fudgeFactor
                         )
                     }
                 } else {
                     if (mGravity == GRAVITY_BOTTOM || mGravity == GRAVITY_CENTER) {
-                        mValueAnimators!![i]!!
-                            .setFloatValues(
-                                mFFTPoints[i * 4 + 1],
-                                mFFTPoints[3] - dbValue * fudgeFactor
-                            )
+                        mValueAnimators!![i]!!.setFloatValues(
+                            mFFTPoints[i * 4 + 1], mFFTPoints[3] - dbValue * fudgeFactor
+                        )
                     } else if (mGravity == GRAVITY_TOP) {
-                        mValueAnimators!![i]!!
-                            .setFloatValues(
-                                mFFTPoints[i * 4 + 1],
-                                mFFTPoints[3] + dbValue * fudgeFactor
-                            )
+                        mValueAnimators!![i]!!.setFloatValues(
+                            mFFTPoints[i * 4 + 1], mFFTPoints[3] + dbValue * fudgeFactor
+                        )
                     }
                 }
                 mValueAnimators!![i]!!.start()
@@ -337,7 +326,9 @@ class SolidLineRenderer(context: Context, view: VisualizerView, colorController:
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
-        updateSettings()
+        if (keys == PulseConfig.PREF_PULSE_SOLID_FUDGE || keys == PulseConfig.PREF_PULSE_LINE_COUNT || keys == PulseConfig.PREF_PULSE_ROUNDED || keys == PulseConfig.PREF_PULSE_SOLID_OVACITY || keys == PulseConfig.PREF_PULSE_GRAVITY || keys == PulseConfig.PREF_PULSE_CENTER_MIRRORED || keys == PulseConfig.PREF_PULSE_LEFT || keys == PulseConfig.PREF_PULSE_VERTICAL_MIRROR || keys == PulseConfig.PREF_PULSE_SMOOTH) {
+            updateSettings()
+        }
     }
 
     companion object {

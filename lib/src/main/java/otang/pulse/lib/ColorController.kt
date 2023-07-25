@@ -68,7 +68,9 @@ class ColorController(private val mContext: Context) : ColorAnimationListener,
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
-        updateSettings()
+        if (keys == PulseConfig.PREF_PULSE_COLOR || keys == PulseConfig.PREF_PULSE_COLOR_CUSTOM || keys == PulseConfig.PREF_PULSE_LAVA_SPEED) {
+            updateSettings()
+        }
     }
 
     companion object {

@@ -14,10 +14,7 @@ import otang.pulse.lib.PulseController.PulseStateListener
 import otang.pulse.lib.util.PulseConfig
 
 class VisualizerView @JvmOverloads constructor(
-    context: Context?,
-    attrs: AttributeSet?,
-    defStyleAttr: Int = 0,
-    defStyleRes: Int = 0
+    context: Context?, attrs: AttributeSet?, defStyleAttr: Int = 0, defStyleRes: Int = 0
 ) : View(context, attrs, defStyleAttr, defStyleRes), PulseController,
     OnSharedPreferenceChangeListener {
     constructor(context: Context) : this(context, null)
@@ -214,7 +211,9 @@ class VisualizerView @JvmOverloads constructor(
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
-        updateSettings()
+        if (keys == PulseConfig.PREF_PULSE || keys == PulseConfig.PREF_PULSE_ROUNDED   || keys == PulseConfig.PREF_PULSE_GRAVITY || keys == PulseConfig.PREF_PULSE_RENDER || keys == PulseConfig.PREF_PULSE_LEFT) {
+            updateSettings()
+        }
     }
 
     companion object {

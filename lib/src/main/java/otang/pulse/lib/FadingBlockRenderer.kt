@@ -13,14 +13,13 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.util.TypedValue
+import otang.pulse.lib.util.PulseConfig
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
 
 class FadingBlockRenderer(
-    context: Context,
-    view: VisualizerView,
-    colorController: ColorController
+    context: Context, view: VisualizerView, colorController: ColorController
 ) : Renderer(context, view, colorController), OnSharedPreferenceChangeListener {
     private val mPaint: Paint
     private val mFadePaint: Paint
@@ -114,8 +113,7 @@ class FadingBlockRenderer(
                         }
                     }
                     mFFTPoints!![i * 4] = (if (mLeftInLandscape) 0 else startPoint) as Float
-                    mFFTPoints!![i * 4 + 2] =
-                        if (mLeftInLandscape) (dbValue * fudgeFactor + DBFUZZ).toFloat() else startPoint - (dbValue * fudgeFactor + DBFUZZ)
+                    mFFTPoints!![i * 4 + 2] = startPoint - (dbValue * fudgeFactor + DBFUZZ)
                 } else {
                     var startPoint = mHeight.toFloat()
                     when (mGravity) {
@@ -149,8 +147,7 @@ class FadingBlockRenderer(
                     rfk = bytes[mDivisions * j]
                     ifk = bytes[mDivisions * j + 1]
                     magnitude = (rfk * rfk + ifk * ifk).toFloat()
-                    dbValue =
-                        if (magnitude > 0) (10 * log10(magnitude.toDouble())).toInt() else 0
+                    dbValue = if (magnitude > 0) (10 * log10(magnitude.toDouble())).toInt() else 0
                     if (mSmoothingEnabled) {
                         dbValue = mFFTAverage!![i]!!.average(dbValue)
                     }
@@ -170,8 +167,7 @@ class FadingBlockRenderer(
                             }
                         }
                         mFFTPoints!![i * 4] = (if (mLeftInLandscape) 0 else startPoint) as Float
-                        mFFTPoints!![i * 4 + 2] =
-                            if (mLeftInLandscape) (dbValue * fudgeFactor + DBFUZZ).toFloat() else startPoint - (dbValue * fudgeFactor + DBFUZZ)
+                        mFFTPoints!![i * 4 + 2] = startPoint - (dbValue * fudgeFactor + DBFUZZ)
                     } else {
                         var startPoint = mHeight.toFloat()
                         when (mGravity) {
@@ -270,8 +266,7 @@ class FadingBlockRenderer(
         mLeftInLandscape = mPref.isLeftInLandscape
         mPaint.pathEffect =
             DashPathEffect(floatArrayOf(mPathEffect1.toFloat(), mPathEffect2.toFloat()), 0f)
-        mPaint.strokeWidth =
-            getLimitedDimenValue(customDimen, 1, 30, res).toFloat()
+        mPaint.strokeWidth = getLimitedDimenValue(customDimen, 1, 30, res).toFloat()
         mDivisions = validateDivision(numDivision)
         mDbFuzzFactor = max(2, min(6, fudgeFactor))
         mSmoothingEnabled = mPref.isSmoothEnabled
@@ -282,7 +277,9 @@ class FadingBlockRenderer(
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, keys: String?) {
-        updateSettings()
+        if (keys == PulseConfig.PREF_PULSE_LEFT || keys == PulseConfig.PREF_PULSE_GRAVITY || keys == PulseConfig.PREF_PULSE_CENTER_MIRRORED || keys == PulseConfig.PREF_PULSE_EMPTY_SIZE || keys == PulseConfig.PREF_PULSE_FADING_DIMEN || keys == PulseConfig.PREF_PULSE_FADING_DIV || keys == PulseConfig.PREF_PULSE_FADING_FUDGE || keys == PulseConfig.PREF_PULSE_SMOOTH || keys == PulseConfig.PREF_PULSE_VERTICAL_MIRROR || keys == PulseConfig.PREF_PULSE_FILL_SIZE) {
+            updateSettings()
+        }
     }
 
     companion object {
@@ -292,9 +289,7 @@ class FadingBlockRenderer(
         private const val GRAVITY_CENTER = 2
         private fun getLimitedDimenValue(`val`: Int, min: Int, max: Int, res: Resources): Int {
             return TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                max(min, min(max, `val`)).toFloat(),
-                res.displayMetrics
+                TypedValue.COMPLEX_UNIT_DIP, max(min, min(max, `val`)).toFloat(), res.displayMetrics
             ).toInt()
         }
 

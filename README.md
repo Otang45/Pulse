@@ -1,0 +1,75 @@
+# About
+Pulse is custom Audio Visualizer for android, ported from [Derpfest-AOSP](https://github.com/DerpFest-AOSP) rom.
+
+# Usage
+> AndroidManifest.xml
+```xml
+<!-- For using audioSessionId = 0 -->
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+<!-- Recuired Permission -->
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+```
+> xml layout
+```xml
+<otang.pulse.lib.VisualizerView
+    android:id="@+id/visualizer_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+```
+> Set audio session id
+```kt
+binding.visualizerView.setAudioSessionId(audioSessionId)
+```
+
+# Configuration
+### Manual
+> Using PulseConfig
+```kt
+// Initialize PulseConfig
+var config = PulseConfig(this)
+
+config.isCenterMirror // Boolean def = false
+config.isPulseEnabled // Boolean def = true
+config.isLeftInLandscape // Boolean def = false
+config.isSolidRounded // Boolean def = true
+config.isSmoothEnabled // Boolean def = true
+config.isVerticalMirror // Boolean def = false
+config.pulseColor // Int def = 0 (0 = Primary, 1 = Custom, 2 = LavaLamp)
+config.solidLineCount // Int def = 32
+config.fadingDim // Int def = 14
+config.fadingDiv // Int def = 16
+config.emptySize // Int def = 1
+config.fadingFudge // Int def = 5
+config.solidFudge // Int def = 5
+config.gravity // Int def = 0 (0 = Bottom, 1 = Top, 2 = Center)
+config.lavaSpeed // Int def = 10000
+config.solidOvacity // Int def = 200
+config.renderStyle // Int def = 1 (0 = Legacy, 1 = Solid)
+config.fillSize // Int def = 4
+config.customColor // ColorInt def = -0x6d000001
+```
+
+### Using Preference
+> Use this key for preference
+```xml
+android:key="pref_pulse"
+android:key="pref_pulse_left"
+android:key="pref_pulse_render"
+android:key="pref_pulse_gravity"
+android:key="pref_pulse_center_mirrored"
+android:key="pref_pulse_vertical_mirror"
+android:key="pref_pulse_smooth"
+android:key="pref_pulse_color"
+android:key="pref_pulse_color_custom"
+android:key="pref_pulse_lava_speed"
+android:key="pref_pulse_fading_dimen"
+android:key="pref_pulse_fading_div"
+android:key="pref_pulse_fill_size"
+android:key="pref_pulse_empty_size"
+android:key="pref_pulse_fading_fudge"
+android:key="pref_pulse_rounded"
+android:key="pref_pulse_solid_ovacity"
+android:key="pref_pulse_line_count"
+android:key="pref_pulse_solid_fudge"
+```
+
