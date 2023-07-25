@@ -1,9 +1,9 @@
 # About
-Pulse is custom Audio Visualizer for android, ported from [Derpfest-AOSP](https://github.com/DerpFest-AOSP) rom.\
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.otang45/Pulse/badge.svg?style=flat)](https://central.sonatype.com/namespace/io.github.otang45)
+Pulse is custom Audio Visualizer for android, ported from [Derpfest-AOSP](https://github.com/DerpFest-AOSP) rom.
 
 # Usage
-> build.gradle
+> build.gradle \
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.otang45/Pulse/badge.svg?style=flat)](https://central.sonatype.com/namespace/io.github.otang45)
 ```gradle
 implementation 'io.github.otang45:Pulse:$version'
 ```
@@ -11,7 +11,7 @@ implementation 'io.github.otang45:Pulse:$version'
 ```xml
 <!-- For using audioSessionId = 0 -->
 <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-<!-- Recuired Permission -->
+<!-- Required Permission -->
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 ```
 > xml layout
