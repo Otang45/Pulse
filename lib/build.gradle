@@ -56,7 +56,7 @@ dependencies {
 
 ext {
     PUBLISH_GROUP_ID = 'io.github.otang45'
-    PUBLISH_VERSION = '2.2'
+    PUBLISH_VERSION = '2.3'
     PUBLISH_ARTIFACT_ID = 'Pulse'
 }
 
