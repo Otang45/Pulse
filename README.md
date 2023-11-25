@@ -1,6 +1,5 @@
 # About
 Pulse is custom Audio Visualizer for android, ported from [Derpfest-AOSP](https://github.com/DerpFest-AOSP) rom.
-
 # Usage
 > build.gradle \
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.otang45/Pulse/badge.svg?style=flat)](https://central.sonatype.com/namespace/io.github.otang45)
@@ -57,24 +56,26 @@ config.customColor // ColorInt def = -0x6d000001
 ### Using Preference
 > Use this key for preference
 ```xml
-android:key="pref_pulse"
-android:key="pref_pulse_left"
-android:key="pref_pulse_render"
-android:key="pref_pulse_gravity"
-android:key="pref_pulse_center_mirrored"
-android:key="pref_pulse_vertical_mirror"
-android:key="pref_pulse_smooth"
-android:key="pref_pulse_color"
-android:key="pref_pulse_color_custom"
-android:key="pref_pulse_lava_speed"
-android:key="pref_pulse_fading_dimen"
-android:key="pref_pulse_fading_div"
-android:key="pref_pulse_fill_size"
-android:key="pref_pulse_empty_size"
-android:key="pref_pulse_fading_fudge"
-android:key="pref_pulse_rounded"
-android:key="pref_pulse_solid_ovacity"
-android:key="pref_pulse_line_count"
-android:key="pref_pulse_solid_fudge"
+android:key="pref_pulse" <!-- SwitchPreference -->
+android:key="pref_pulse_left" <!-- SwitchPreference -->
+android:key="pref_pulse_render" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_gravity" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_center_mirrored" <!-- SwitchPreference -->
+android:key="pref_pulse_vertical_mirror" <!-- SwitchPreference -->
+android:key="pref_pulse_smooth" <!-- SwitchPreference -->
+android:key="pref_pulse_color" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_color_custom" <!-- ColorPreference -->
+android:key="pref_pulse_lava_speed" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_fading_dimen" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_fading_div" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_fill_size" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_empty_size" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_fading_fudge" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_rounded" <!-- SwitchPreference -->
+android:key="pref_pulse_solid_ovacity" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_line_count" <!-- ListPreference / SeekPreference -->
+android:key="pref_pulse_solid_fudge" <!-- ListPreference / SeekPreference -->
 ```
 
+### Example
+> See [Sample](https://github.com/Otang45/Pulse/tree/master/app)
