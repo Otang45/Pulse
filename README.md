@@ -79,3 +79,5 @@ android:key="pref_pulse_solid_fudge" <!-- ListPreference / SeekPreference -->
 
 ### Example
 > See [Sample](https://github.com/Otang45/Pulse/tree/master/app)
+
+<img src="Screenshot.png" alt="drawing" width="420"/>
