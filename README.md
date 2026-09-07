@@ -1,3 +1,8 @@
+> [!WARNING]
+> **DEPRECATED / UNMAINTAINED**
+>
+> This repository is no longer maintained. Please switch to the Jetpack Compose version at [PulseCompose](https://github.com/otangid/PulseCompose).
+
 # About
 Pulse is custom Audio Visualizer for android, ported from [Derpfest-AOSP](https://github.com/DerpFest-AOSP) rom.
 # Usage
